@@ -38,7 +38,11 @@ class ExampleSpec extends Specification with SampleData {
     val balanceIso : Iso[Account, Balance] = Iso[Account,Balance](_.balance)(balance => Account(balance.accountId, List(Booking(balance.id, balance.amount))))
     
     "transfer an account into a balance" in {
-      balanceIso.get(person.account.get) === Balance(1234, 2,0)
+      balanceIso.get(person.account.get) === Balance(1234, 2, 64)
+    }
+    
+    "transfer balance into an account" in {
+      balanceIso.reverseGet(person.account.get.balance) === Account(1234, List(Booking(2,64)))
     }
   
   }
