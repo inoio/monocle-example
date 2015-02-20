@@ -1,17 +1,20 @@
 package example
 
-import scalaz.\/
 import org.specs2.mutable._
 import monocle.function._
 import monocle._
 import monocle.Iso
+import monocle.function._
+import monocle.std._
+
 
 class ExampleSpec extends Specification with SampleData {
 
   import Person._ 
   import Account._
   import Address._
-  
+  import Booking._
+
   "PLens / Lens" should {
     "have a getter for name" in {
       _name.get(person) === "Klink"
@@ -33,8 +36,60 @@ class ExampleSpec extends Specification with SampleData {
       
       (_firstAddress ^|-> _city).set("Berlin")(person) === person.copy(firstAddress = person.firstAddress.copy(city = "Berlin"))
     }
+
+    "can set lists" in {
+      _bookings.set(List(Booking(42, -10)))(account) === account.copy(bookings = List(Booking(42, -10)))
+    }
+
+    "can modify lists" in {
+      _bookings.modify(Booking(42, -10) :: _)(account) === account.copy(bookings = Booking(42, -10) :: account.bookings)
+    }
+
+    "can modify head of list" in {
+      (_bookings composeOptional headMaybe).modify(_ => Booking(1, 1))(account) === account.copy(
+        bookings = Booking(1, 1) :: account.bookings.tail
+      )
+    }
+
+    "modifiing head of empty list results in empty list" in {
+      val accountWithoutBookings = account.copy(bookings = Nil)
+      (_bookings composeOptional headMaybe).modify(_ => Booking(1, 1))(accountWithoutBookings) === account.copy(
+        bookings = Nil
+      )
+    }
+
+    "can modify field of head of list" in {
+      val copiedAccount = account.copy(
+        bookings = account.bookings.head.copy(
+          amount = account.bookings.head.amount + 10
+        ) :: account.bookings.tail
+      )
+
+      (_bookings composeOptional headMaybe composeLens _amount).modify(_ + 10)(account) === copiedAccount
+
+      // or
+
+      (_bookings ^|-? headMaybe ^|-> _amount).modify(_ + 10)(account) === copiedAccount
+    }
+
+    "can modify nth field of a list" in {
+      val n = 1
+      val copiedAccount = account.copy(
+        bookings = account.bookings match {
+          case first :: second :: tail =>
+            first :: second.copy(amount = second.amount + 10) :: tail
+        }
+      )
+
+      (_bookings composeOptional index(n) composeLens _amount).modify(_ + 10)(account) === copiedAccount
+
+      // or
+
+      (_bookings ^|-? index(n) ^|-> _amount).modify(_ + 10)(account) === copiedAccount
+    }
+
   }
-  
+
   "Iso" should {
     import monocle.syntax._
     import monocle.std._

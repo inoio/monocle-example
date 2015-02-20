@@ -16,7 +16,7 @@ case class Account(number: Int, bookings : List[Booking]) {
 case class Address(street: String, city: String) 
 
 @Lenses("_")
-case class Booking(id: Int, amount: BigDecimal) 
+case class Booking(id: Int, amount: BigDecimal)
 
 @Lenses("_")
 case class Balance(accountId: Int, id: Int, amount : BigDecimal)
