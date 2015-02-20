@@ -7,10 +7,11 @@ import monocle.Iso
 import monocle.function._
 import monocle.std._
 
+import org.specs2.scalaz.Spec
 
-class ExampleSpec extends Specification with SampleData {
+class ExampleSpec extends Spec with SampleData {
 
-  import Person._ 
+  import Person._
   import Account._
   import Address._
   import Booking._
@@ -23,17 +24,17 @@ class ExampleSpec extends Specification with SampleData {
     "have a setter  for name" in {
       _name.set("Holla")(person) === person.copy(name = "Holla")
     }
-    
+
     "have a modifier lens for name" in {
       _name.modify(n => n + "2")(person) === person.copy(name = "Klink2")
     }
 
     "can compose lenses" in {
-      val addressCity : Lens[Person, String] = Person._firstAddress composeLens Address._city
+      val addressCity: Lens[Person, String] = Person._firstAddress composeLens Address._city
       addressCity.set("Berlin")(person) === person.copy(firstAddress = person.firstAddress.copy(city = "Berlin"))
-      
+
       // or
-      
+
       (_firstAddress ^|-> _city).set("Berlin")(person) === person.copy(firstAddress = person.firstAddress.copy(city = "Berlin"))
     }
 
@@ -90,26 +91,48 @@ class ExampleSpec extends Specification with SampleData {
 
   }
 
+  "Working with Option/Maybe" should {
+    import monocle.syntax._
+    import monocle.std._
+
+    import scalaz.Maybe
+    import scalaz.syntax.maybe._
+    "use lens to access optional element" in {
+      some.getMaybe(_firstName.get(person)) === "Markus".just
+    }
+ 
+    "define an Optional instead" in {
+      import scalaz.std.option._
+      import scalaz.syntax.std.option._
+      val optFirstName: Optional[Person, String] = Optional[Person, String](person => person.firstName.toMaybe)(firstName => person => person.copy(firstName = firstName.some))
+      
+      optFirstName.set("Dude")(person) === person.copy(firstName = "Dude".some)
+      optFirstName.getMaybe(person) === "Markus".just 
+    }
+    
+  }
+
   "Iso" should {
     import monocle.syntax._
     import monocle.std._
-    val accountToBalance : Iso[Account, Balance] = Iso[Account,Balance](_.balance)(balance => Account(balance.accountId, List(Booking(balance.id, balance.amount))))
+    val accountToBalance: Iso[Account, Balance] = Iso[Account, Balance](_.balance)(balance => Account(balance.accountId, List(Booking(balance.id, balance.amount))))
 
     "transfer an account into a balance" in {
-      val acc : Option[Account] = _account.get(person)
+      val acc: Option[Account] = _account.get(person)
       accountToBalance.get(person.account.get) === Balance(1234, 2, 64)
-      
+
       // or
-      
-      (person.account.get applyIso accountToBalance  get)  === Balance(1234,2, 64)
+
+      (person.account.get &<-> accountToBalance get) === Balance(1234, 2, 64)
     }
-    
+
     "transfer balance into an account" in {
-      accountToBalance.reverseGet(person.account.get.balance) === Account(1234, List(Booking(2,64)))
-      
+      accountToBalance.reverseGet(person.account.get.balance) === Account(1234, List(Booking(2, 64)))
+
       // or
-      
-      (person.account.get.balance applyIso accountToBalance.reverse get)  === Account(1234, List(Booking(2,64)))
+
+      (person.account.get.balance &<-> accountToBalance.reverse get) === Account(1234, List(Booking(2, 64)))
     }
+
   }
 }

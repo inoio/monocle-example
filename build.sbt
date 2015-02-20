@@ -10,7 +10,8 @@ libraryDependencies++=Seq(
   "com.github.julien-truffaut"  %%  "monocle-core"    % libraryVersion,
   "com.github.julien-truffaut"  %%  "monocle-generic" % libraryVersion,
   "com.github.julien-truffaut"  %%  "monocle-macro"   % libraryVersion,
-  "com.github.julien-truffaut"  %%  "monocle-law"     % libraryVersion % "test"
+  "com.github.julien-truffaut"  %%  "monocle-law"     % libraryVersion % "test",
+  "org.typelevel"   			%% "scalaz-specs2"    % "0.3.0"  % "test"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)

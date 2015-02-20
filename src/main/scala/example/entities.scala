@@ -1,7 +1,9 @@
 package example
 import scalaz.syntax.foldable._
 import scalaz.std.list._
+import scalaz.syntax.foldable._
 import scalaz.std.math.bigDecimal._
+import scalaz.std.anyVal._
 import monocle.macros._
 
 @Lenses("_")
@@ -9,10 +11,10 @@ case class Person(name: String, firstName : Option[String], firstAddress : Addre
 
 @Lenses("_")
 case class Account(number: Int, bookings : List[Booking]) {
-  def balance : Balance = Balance(number, bookings.map(_.id).max,  bookings.foldMap(_.amount))
+  def balance : Balance = Balance(number, bookings.map(_.id).maximum.getOrElse(0),  bookings.foldMap(_.amount))
 }
  
-@Lenses("_")
+@Lenses("_") 
 case class Address(street: String, city: String) 
 
 @Lenses("_")
