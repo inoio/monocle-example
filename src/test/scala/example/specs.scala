@@ -1,5 +1,6 @@
 package example
 
+import scalaz.\/
 import org.specs2.mutable._
 import monocle.function._
 import monocle._
@@ -35,15 +36,25 @@ class ExampleSpec extends Specification with SampleData {
   }
   
   "Iso" should {
-    val balanceIso : Iso[Account, Balance] = Iso[Account,Balance](_.balance)(balance => Account(balance.accountId, List(Booking(balance.id, balance.amount))))
-    
+    import monocle.syntax._
+    import monocle.std._
+    val accountToBalance : Iso[Account, Balance] = Iso[Account,Balance](_.balance)(balance => Account(balance.accountId, List(Booking(balance.id, balance.amount))))
+
     "transfer an account into a balance" in {
-      balanceIso.get(person.account.get) === Balance(1234, 2, 64)
+      val acc : Option[Account] = _account.get(person)
+      accountToBalance.get(person.account.get) === Balance(1234, 2, 64)
+      
+      // or
+      
+      (person.account.get applyIso accountToBalance  get)  === Balance(1234,2, 64)
     }
     
     "transfer balance into an account" in {
-      balanceIso.reverseGet(person.account.get.balance) === Account(1234, List(Booking(2,64)))
+      accountToBalance.reverseGet(person.account.get.balance) === Account(1234, List(Booking(2,64)))
+      
+      // or
+      
+      (person.account.get.balance applyIso accountToBalance.reverse get)  === Account(1234, List(Booking(2,64)))
     }
-  
   }
 }
